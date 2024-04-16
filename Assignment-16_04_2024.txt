@@ -1,0 +1,152 @@
+<library>
+  <book>
+    <title>Book 1</title>
+    <author>Author 1</author>
+    <year>2022</year>
+  </book>
+  <book>
+    <title>Book 2</title>
+    <author>Author 2</author>
+    <year>2023</year>
+  </book>
+  <book>
+    <title>Book 3</title>
+    <author>Author 1</author>
+    <year>2020</year>
+  </book>
+  <book>
+    <title>Book 4</title>
+    <author>Author 1</author>
+    <year>2022</year>
+  </book>
+  <book>
+    <title>Book 5</title>
+    <author>Author 2</author>
+    <year>2023</year>
+  </book>
+  <book>
+    <title>Book 3</title>
+    <author>Author 1</author>
+    <year>2020</year>
+  </book>
+</library>
+ 
+1] Insert above xml document into documents database.
+2] Retrieve all books from an XML document
+3] Retrieve all unique authors from an XML document
+4] Retrieve the count of books written by each author
+5] Retrieve books published after a specific year 2020
+
+
+________________________Solution_________________________________
+
+xquery version "1.0-ml";
+declare variable $book := fn:doc("Library");
+
+(: Insert above xml document into documents database. :)
+xdmp:document-insert('Library',
+<library>
+  <book>
+    <title>Book 1</title>
+    <author>Author 1</author>
+    <year>2022</year>
+  </book>
+  <book>
+    <title>Book 2</title>
+    <author>Author 2</author>
+    <year>2023</year>
+  </book>
+  <book>
+    <title>Book 3</title>
+    <author>Author 1</author>
+    <year>2020</year>
+  </book>
+  <book>
+    <title>Book 4</title>
+    <author>Author 1</author>
+    <year>2022</year>
+  </book>
+  <book>
+    <title>Book 5</title>
+    <author>Author 2</author>
+    <year>2023</year>
+  </book>
+  <book>
+    <title>Book 3</title>
+    <author>Author 1</author>
+    <year>2020</year>
+  </book>
+</library>,
+<options xmlns="xdmp:document-insert">
+  <collections>
+    <collection>Library</collection>
+  </collections>
+</options>),
+
+(: Retrieve all books from an XML document :)
+
+element All_Books{
+for $books in $book/library/book/title/string()
+return element BookName{$books}
+}
+,
+
+(: Retrieve all unique authors from an XML document
+Retrieve the count of books written by each author :)
+
+element All_Authors{
+for $UniAuth in fn:distinct-values($book/library/book/author)
+let $BooksCount := fn:count($book/library/book[./author eq $UniAuth])
+return element TotalBooksByAuthor{ element AuthorName{$UniAuth}, element BookCount{$BooksCount}}
+}
+
+(: Retrieve books published after a specific year 2020 :)
+
+,
+element Years{
+for $books in $book/library/book[./year gt 2020]
+return element object {element title{$books/title/text()}, element year {$books/year/text()}}
+}
+
+_____________________________Output_____________________________________
+
+<All_Books>
+  <BookName>Book 1</BookName>
+  <BookName>Book 2</BookName>
+  <BookName>Book 3</BookName>
+  <BookName>Book 4</BookName>
+  <BookName>Book 5</BookName>
+  <BookName>Book 3</BookName>
+</All_Books>
+
+
+<All_Authors>
+  <TotalBooksByAuthor>
+    <AuthorName>Author 1</AuthorName>
+    <BookCount>4</BookCount>
+  </TotalBooksByAuthor>
+  <TotalBooksByAuthor>
+    <AuthorName>Author 2</AuthorName>
+    <BookCount>2</BookCount>
+  </TotalBooksByAuthor>
+</All_Authors>
+
+
+<Years>
+  <object>
+    <title>Book 1</title>
+    <year>2022</year>
+  </object>
+  <object>
+    <title>Book 2</title>
+    <year>2023</year>
+  </object>
+  <object>
+    <title>Book 4</title>
+    <year>2022</year>
+  </object>
+  <object>
+    <title>Book 5</title>
+    <year>2023</year>
+  </object>
+</Years>
