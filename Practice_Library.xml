@@ -1,0 +1,457 @@
+<export><workspace name="Practice/Library"><query name="Query 1" focus="false" listorder="1" taborder="9" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">
+(: forest :)
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+let $config := admin:get-configuration()
+let $config := admin:forest-create(
+  $config, 
+  "practice_forest",
+  xdmp:host(), 
+  ())
+return admin:save-configuration($config)
+
+; (: remember, semi colon is the transaction separator and forces a commit.  necessary so the next step can see what was done in the prior step :)
+
+(: database :)
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+let $config := admin:get-configuration()
+let $config := admin:database-create(
+  $config,
+  "practice",
+  xdmp:database("Security"),
+  xdmp:database("Schemas"))
+return admin:save-configuration($config)
+
+;
+
+(: attach forest to database :)
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+let $config := admin:get-configuration()
+let $config := admin:database-attach-forest(
+  $config,
+  xdmp:database("practice"), 
+  xdmp:forest("practice_forest"))
+return admin:save-configuration($config)
+
+;
+
+(: application server :)
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+let $config := admin:get-configuration()
+let $groupid := admin:group-get-id($config, "Default")
+let $server := admin:http-server-create(
+  $config, 
+  $groupid,
+  "8042-practice",
+  "C:\mls-projects\practice",
+  8042,
+  0,
+  admin:database-get-id($config, "practice"))
+return admin:save-configuration($server)
+</query><query name="Query 2" focus="false" listorder="2" taborder="1" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+(: Load Documents :)
+xdmp:eval('for $d in xdmp:filesystem-directory("C:\mls-projects\functions-practice")//dir:entry
+return xdmp:document-load($d//dir:pathname, 
+  &lt;options xmlns="xdmp:document-load"&gt;
+    &lt;uri&gt;{fn:string($d//dir:filename)}&lt;/uri&gt;
+  &lt;/options&gt;)',  (),
+		  &lt;options xmlns="xdmp:eval"&gt;
+		    &lt;database&gt;{xdmp:database("practice")}&lt;/database&gt;
+		  &lt;/options&gt;)</query><query name="Query 3" focus="false" listorder="3" taborder="1" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare namespace pr="http://marklogic.com/MLU/top-songs"; 
+
+cts:search(/pr:top-song,"Angel")</query><query name="Query 4" focus="false" listorder="4" taborder="1" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare namespace pr="http://marklogic.com/MLU/top-songs"; 
+
+
+for $i in cts:values(cts:element-reference(xs:QName("pr:title")))
+return $i</query><query name="Query 5" focus="false" listorder="5" taborder="1" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare namespace pr="http://marklogic.com/MLU/top-songs"; 
+
+
+for $i in cts:values(cts:element-reference(xs:QName("pr:artist")))
+return $i 
+
+</query><query name="Query 6" focus="false" listorder="6" taborder="1" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare namespace pr="http://marklogic.com/MLU/top-songs"; 
+
+(: let $values := cts:values(cts:element-reference(xs:QName("pr:artist")))
+for $value in $values
+let $filtered-values := where cts:value-match("*A*",$value)
+return $filtered-values :)
+
+cts:value-match(cts:element-reference(xs:QName("pr:artist")), "*A*") 
+
+
+</query><query name="Query 7" focus="false" listorder="7" taborder="1" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare namespace pr="http://marklogic.com/MLU/top-songs"; 
+
+(: cts:path-range-query("/pr:top-song/pr:lengths/pr:length","&gt;=","1") 
+
+cts:search(doc(),cts:path-range-query(/pr:top-song/pr:title,"&gt;="),"filtered"):)
+
+cts:path-range-query(/pr:top-song/pr:title,"=","Ace of Base")
+
+</query><query name="Query 8" focus="false" listorder="8" taborder="1" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare namespace pr="http://marklogic.com/MLU/top-songs"; 
+
+let $i := cts:search(/pr:top-song/pr:descr, cts:document-query(("Aaliyah+Try-Again.xml",	"ABBA+Dancing-Queen.xml")))
+return $i/string()</query><query name="Query 9" focus="false" listorder="9" taborder="9" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+  
+cts:uri-match("*50*.xml")
+
+collection -&gt; Books
+Elements ---&gt; BookName
+              Pages
+              BookType
+              
+              (:&lt;tXML&gt;
+                &lt;Books&gt;
+                   &lt;BookName&gt;&lt;/BookName&gt;
+                   &lt;Pages&gt;&lt;/Pages&gt;
+                   &lt;BookType&gt;&lt;/BookType&gt;
+                &lt;/Books&gt;
+              &lt;tXML&gt;  :)</query><query name="Query 10" focus="false" listorder="10" taborder="1" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+              
+xdmp:document-insert('/Books/Book7',
+&lt;tXML&gt;
+&lt;Books&gt;
+&lt;BookName&gt;Fundamentals of JavaScript&lt;/BookName&gt;
+&lt;Pages&gt;489&lt;/Pages&gt;
+&lt;BookType&gt;Programming&lt;/BookType&gt;
+&lt;/Books&gt;
+&lt;/tXML&gt;,
+&lt;options xmlns="xdmp:document-insert"&gt;
+  &lt;collections&gt;
+    &lt;collection&gt;Books&lt;/collection&gt;
+  &lt;/collections&gt;
+&lt;/options&gt;
+)</query><query name="Query 11" focus="false" listorder="11" taborder="11" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+for $i in collection("Books")
+return $i/tXML/string()
+</query><query name="Query 12" focus="false" listorder="12" taborder="12" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+cts:search(doc(),cts:path-range-query("/tXML/Books/Pages","=","500"),"filtered")</query><query name="Query 13" focus="false" listorder="13" taborder="13" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+cts:search(//Pages, cts:collection-query("Books"))</query><query name="Query 14" focus="false" listorder="14" taborder="14" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+cts:search(fn:doc()/tXML,"of")</query><query name="Query 15" focus="false" listorder="15" taborder="15" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+cts:estimate("java")</query><query name="Query 16" focus="false" listorder="16" taborder="16" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+xdmp:document-get-collections("/Books/Book1"),
+collection("Books"),
+for $i in collection("Books")
+return $i/tXML/Books/Pages/text(),</query><query name="Query 17" focus="false" listorder="17" taborder="17" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+fn:current-dateTime(),
+fn:current-date(),
+fn:current-time(),
+fn:days-from-duration(xs:duration("P4DT345H")),
+fn:month-from-date(xs:date("2023-01-03")),
+fn:months-from-duration(xs:duration("P3Y2M")),
+fn:years-from-duration(xs:duration("P3Y2M")),
+let $i :=fn:current-date()-xs:date("2002-11-10")
+return fn:days-from-duration($i) idiv 365,
+(: fn:months-from-duration(xs:date(fn:current-date()-xs:date("2002-11-10"))) :)
+fn:days-from-duration(fn:current-date()-xs:date("2002-11-10")) div 365.25 * 12 * 30.436,
+fn:current-date()-xs:date("2002-11-10"),
+fn:days-from-duration(xs:duration("P5DT33H"))
+</query><query name="Query 18" focus="false" listorder="18" taborder="18" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";&#13;</query><query name="Query 19" focus="false" listorder="19" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+xdmp:document-insert('Library',
+&lt;library&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 1&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 2&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 4&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 5&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+&lt;/library&gt;,
+&lt;options xmlns="xdmp:document-insert"&gt;
+  &lt;collections&gt;
+    &lt;collection&gt;Library&lt;/collection&gt;
+  &lt;/collections&gt;
+&lt;/options&gt;)</query><query name="Query 20" focus="false" listorder="20" taborder="20" active="false" database="9328155861343718221" server="4624739403890708669" database-name="practice" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";&#13;</query><query name="Query 21" focus="false" listorder="21" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare namespace bk = "/Library/Practice"; 
+
+
+(: Document Inserrt :)
+xdmp:document-insert('Library1',
+&lt;library&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 1&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 2&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 4&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 5&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+&lt;/library&gt;,
+&lt;options xmlns="xdmp:document-insert"&gt;
+  &lt;collections&gt;
+    &lt;collection&gt;Library&lt;/collection&gt;
+  &lt;/collections&gt;
+&lt;/options&gt;),
+
+(: List all the books , 
+collection("Library")/bk:library/bk:book/bk:title/text(), :)
+/bk:library/bk:book/bk:title/text(),
+
+(:Unique Author names
+cts:values(cts:element-reference(xs:QName("bk:author"))),  :)
+fn:distinct-values(//bk:author),
+
+(:Books Published after 2020 :)
+/bk:library/bk:book[bk:year gt 2020]/bk:title/text(),
+
+(: count of book by Author 1 :)
+fn:count(/bk:library/bk:book[bk:author eq "Author 1"]/bk:author),
+
+(: count of book by Author 2 :)
+fn:count(/bk:library/bk:book[bk:author eq "Author 2"]/bk:author)</query><query name="assignment" focus="false" listorder="22" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+declare variable $book := fn:doc("Library");
+
+(: Document Inserrt :)
+xdmp:document-insert('Library',
+&lt;library&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 1&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 2&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 4&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 5&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+&lt;/library&gt;,
+&lt;options xmlns="xdmp:document-insert"&gt;
+  &lt;collections&gt;
+    &lt;collection&gt;Library&lt;/collection&gt;
+  &lt;/collections&gt;
+&lt;/options&gt;),
+
+
+(: List all the books :)
+$book/library/book/title/text(),
+
+
+(:Unique Author names :)
+fn:distinct-values($book/library/book/author),
+
+
+(:Books Published after 2020 :)
+$book/library/book[year gt 2020]/title/text(),
+$book/library/book[year lt 2020]/title/text(),
+$book/library/book[year eq 2020]/title/text(),
+
+
+(: count of book by each Authors :)
+for $i in fn:distinct-values($book/library/book/author)
+return fn:count($book/library/book[author eq $i]/author)</query><query name="Query 22" focus="false" listorder="23" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare variable $book := fn:doc("Library");
+fn:trace("Book List: ",$book/library/book/title/text()
+
+$book/library/book/title/text(),
+fn:distinct-values($book/library/book/author),
+$book/library/book[year gt 2020]/title/text(),
+for $i in fn:distinct-values($book/library/book/author)
+return fn:count($book/library/book[author eq $i]/author),
+collection("Library"),
+fn:trace("hello","e")</query><query name="Query 23" focus="false" listorder="24" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+collection("Library")/library/book/title/text()</query><query name="Query 24" focus="false" listorder="25" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+element Result{
+for $author in fn:distinct-values(doc('Library')/library/book/author)
+let $count := count(doc('Library')/library/book[./author eq $author])
+return element object{element author{$author}, element Books{$count}}
+}</query><query name="Solution" focus="false" listorder="26" taborder="1" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare variable $book := fn:doc("Library");
+
+element All_Books{
+for $books in $book/library/book/title/string()
+return element BookName{$books}
+}
+,
+element All_Authors{
+for $UniAuth in fn:distinct-values($book/library/book/author)
+let $BooksCount := fn:count($book/library/book[./author eq $UniAuth])
+return element TotalBooksByAuthor{ element AuthorName{$UniAuth}, element BookCount{$BooksCount}}
+}
+,
+element Years{
+for $books in $book/library/book[./year gt 2020]
+return element object {element title{$books/title/text()}, element year {$books/year/text()}}
+}</query><query name="Query 26" focus="false" listorder="27" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare variable $book := fn:doc("Library");
+
+element root{
+for $books in $book/library/book/title/text()
+for $authors in fn:distinct-values($book/library/book/author)
+let $auth := $authors
+for $afterYear in $book/library/book[./year gt 2020]
+let $years := $afterYear
+return $years/title/text()
+}</query><query name="Query 27" focus="false" listorder="28" taborder="28" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";&#13;</query><query name="Query 28" focus="false" listorder="29" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare variable $book := doc("Library");
+
+(: 
+
+xdmp:node-insert-child($book/library/book/year, &lt;month&gt;12&lt;/month&gt;)  
+
+xdmp:node-delete($book/library/book/year/month) 
+
+xdmp:node-replace($book/library/book[./year eq 2020]/year, &lt;year&gt;&lt;yesr&gt;2020&lt;/yesr&gt;&lt;/year&gt;)
+ 
+ 
+:)
+
+xdmp:node-insert-after($book/library/book/year, &lt;price&gt;50&lt;/price&gt;)  
+</query><query name="Query 29" focus="false" listorder="30" taborder="30" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+xdmp:document-insert('Library',
+&lt;library&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 1&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 2&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 4&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 5&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+&lt;/library&gt;,
+&lt;options xmlns="xdmp:document-insert"&gt;
+  &lt;collections&gt;
+    &lt;collection&gt;Library&lt;/collection&gt;
+  &lt;/collections&gt;
+&lt;/options&gt;)</query><query name="Query 30" focus="false" listorder="31" taborder="31" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";&#13;</query><query name="Query 31" focus="false" listorder="32" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+doc("Library")
+</query><query name="Query 32" focus="false" listorder="33" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+fn:current-dateTime(),
+sql:dateadd("month", 100, fn:current-date()),
+xdmp:dayname-from-date(fn:current-date()),
+xdmp:month-name-from-date(fn:current-date()),
+xdmp:quarter-from-date(fn:current-date()),
+xdmp:week-from-date(fn:current-date()),
+xdmp:weekday-from-date(fn:current-date()),
+xdmp:yearday-from-date(fn:current-date())</query><query name="Query 33" focus="false" listorder="34" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+cts:avg(cts:element-values(xs:QName("price"))),
+cts:max(cts:element-reference(xs:QName("price"))),
+cts:min(cts:element-reference(xs:QName("price")))
+</query><query name="Query 34" focus="false" listorder="35" taborder="35" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+(: xdmp:filesystem-directory("C:")
+xdmp:filesystem-file("C:\Users\Yeshwanth Kumar\Desktop\Training\XQuery_Functions.txt")
+sql:datediff("year",fn:current-date(),xs:date("2002-11-10"))
+xdmp:dayname-from-date(xs:date("2002-11-10"))
+xdmp:document-get-quality("Library")
+cts:search(fn:doc("Library"), "Author",("unfiltered",cts:index-order(cts:element-reference(xs:QName("author")))))[1 to 10]
+:)
+
+</query><query name="Query 35" focus="false" listorder="36" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+fn:current-date() + xs:dayTimeDuration("P1D"),
+fn:current-date() - xs:dayTimeDuration("P1D"),
+xs:date("2021-03-03") + xs:yearMonthDuration("P10Y19M")
+
+</query><query name="Query 36" focus="false" listorder="37" taborder="1" active="false" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="2">xquery version "1.0-ml";
+
+cts:values(cts:path-reference(/library/book))</query><query name="Query 37" focus="false" listorder="38" taborder="1" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+(: let $quality := xdmp:document-get-quality("Library")
+return $quality 
+
+:)
+cts:uri-match("*"),
+cts:uris("Library",(),cts:word-query("book")),
+cts:min(cts:element-reference(xs:QName("year"))),
+cts:max(cts:element-reference(xs:QName("year"))),
+cts:sum-aggregate(cts:element-reference(xs:QName("year"))),
+cts:avg-aggregate(cts:element-reference(xs:QName("year")))</query></workspace></export>
