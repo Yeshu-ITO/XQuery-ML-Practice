@@ -1,0 +1,96 @@
+ * Create an XML document with URI "/XML/Library/Book" in the Documents database.
+ * Rename document "/XML/Library/Book" to "/UCBOS/Library/Book". 
+ * Add the above document to the collections "Book" and "UCBOS".
+ * Write a query to read the document "/UCBOS/Library/Book" from other databases.
+ * Delete the books in document which published before 2022. 
+ * Add a new Book to the document Title: Book 6 Author: Author101 Year: 2023 
+ * Add a new element Price for all books (give random values) 
+ * Update Author Names with a smaller case.
+
+
+1. Creating the document 
+
+xquery version "1.0-ml";
+
+xdmp:document-insert("/XML/Library/Book",
+<library>
+  <book>
+    <title>Book 1</title>
+    <author>Author 1</author>
+    <year>2022</year>
+  </book>
+  <book>
+    <title>Book 2</title>
+    <author>Author 2</author>
+    <year>2023</year>
+  </book>
+  <book>
+    <title>Book 3</title>
+    <author>Author 1</author>
+    <year>2020</year>
+  </book>
+  <book>
+    <title>Book 4</title>
+    <author>Author 1</author>
+    <year>2022</year>
+  </book>
+  <book>
+    <title>Book 5</title>
+    <author>Author 2</author>
+    <year>2023</year>
+  </book>
+  <book>
+    <title>Book 3</title>
+    <author>Author 1</author>
+    <year>2020</year>
+  </book>
+</library>
+)
+
+
+2. Renaming the Document
+
+xdmp:document-insert("/UCBOS/Library/Book", fn:doc("/XML/Library/Book")),
+xdmp:document-delete("/XML/Library/Book")
+
+
+3. Adding the document to the collections
+
+xdmp:document-add-collections("/UCBOS/Library/Book", ("Book","UCBOS"))
+
+
+4. Reading Document from different Database
+
+xdmp:eval('fn:doc("/UCBOS/Library/Book")',
+(),
+<options xmlns="xdmp:eval">
+  <database>{xdmp:database("Revision")}</database>
+</options>)
+
+
+5. Delete Books older than 2022
+
+xdmp:node-delete($uri/library/book[year lt 2022])
+
+
+6. Adding new Book
+
+let $newNode :=  <book>
+    <title>Book 6</title>
+    <author>Author 101</author>
+    <year>2023</year></book> 
+return xdmp:node-insert-child($uri/library,$newNode)
+
+
+7. Adding Price to all books with random prices
+
+for $i in $uri/library/book/year
+let $price := <price>{xdmp:random(100)}</price>
+return xdmp:node-insert-after($i,$price)
+
+
+8. Updating author names to lowercase
+
+for $i in $uri/library/book/author
+let $author := fn:lower-case($i/string())
+return xdmp:node-replace($i, <author>{$author}</author>)

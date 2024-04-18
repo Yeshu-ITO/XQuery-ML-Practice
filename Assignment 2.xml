@@ -1,0 +1,76 @@
+<export><workspace name="Assignment 2"><query name="Document Creation" focus="false" listorder="1" taborder="1" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+xdmp:document-insert("/XML/Library/Book",
+&lt;library&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 1&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 2&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 4&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2022&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 5&lt;/title&gt;
+    &lt;author&gt;Author 2&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;
+  &lt;/book&gt;
+  &lt;book&gt;
+    &lt;title&gt;Book 3&lt;/title&gt;
+    &lt;author&gt;Author 1&lt;/author&gt;
+    &lt;year&gt;2020&lt;/year&gt;
+  &lt;/book&gt;
+&lt;/library&gt;
+)</query><query name="Document Rename" focus="false" listorder="2" taborder="2" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+xdmp:document-insert("/UCBOS/Library/Book", fn:doc("/XML/Library/Book")),
+xdmp:document-delete("/XML/Library/Book")</query><query name="Add to Collection" focus="false" listorder="3" taborder="3" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+xdmp:document-add-collections("/UCBOS/Library/Book", ("Book","UCBOS"))
+</query><query name="Read from Different DB" focus="false" listorder="4" taborder="4" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+
+xdmp:eval('fn:doc("/UCBOS/Library/Book")',
+(),
+&lt;options xmlns="xdmp:eval"&gt;
+  &lt;database&gt;{xdmp:database("Revision")}&lt;/database&gt;
+&lt;/options&gt;)</query><query name="Add new node" focus="false" listorder="5" taborder="6" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare variable $uri := doc("/UCBOS/Library/Book");
+
+let $newNode :=  &lt;book&gt;
+    &lt;title&gt;Book 6&lt;/title&gt;
+    &lt;author&gt;Author 101&lt;/author&gt;
+    &lt;year&gt;2023&lt;/year&gt;&lt;/book&gt; 
+return xdmp:node-insert-child($uri/library,$newNode),
+$uri</query><query name="Delete a node" focus="false" listorder="6" taborder="5" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare variable $uri := doc("/UCBOS/Library/Book");
+
+xdmp:node-delete($uri/library/book[year lt 2022]),
+$uri</query><query name="Add new element price" focus="false" listorder="7" taborder="7" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare variable $uri := doc("/UCBOS/Library/Book");
+
+for $i in $uri/library/book/year
+let $price := &lt;price&gt;{xdmp:random(100)}&lt;/price&gt;
+return xdmp:node-insert-after($i,$price)</query><query name="Author name to Lower case" focus="false" listorder="8" taborder="8" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+declare variable $uri := doc("/UCBOS/Library/Book");
+
+for $i in $uri/library/book/author
+let $author := fn:lower-case($i/string())
+return xdmp:node-replace($i, &lt;author&gt;{$author}&lt;/author&gt;)</query><query name="Query 1" focus="false" listorder="9" taborder="9" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+xdmp:database-forests(xdmp:database("Documents")),
+xdmp:document-get-collections("/UCBOS/Library/Book")</query><query name="Query 2" focus="true" listorder="10" taborder="10" active="true" database="14169668927632999846" server="4624739403890708669" database-name="Documents" server-name="App-Services" mode="xquery" optimize="1">xquery version "1.0-ml";
+xdmp:forests()
+xdmp:node-collections(fn:doc('/UCBOS/Library/Book')/library)
+xdmp:node-kind(fn:doc('/UCBOS/Library/Book')/library/book/year/text())
+cts:words()</query></workspace></export>
