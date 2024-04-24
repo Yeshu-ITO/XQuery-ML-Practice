@@ -1,0 +1,29 @@
+xquery version "1.0-ml";
+declare function local:Timeslot($start as xs:dateTime, $end as xs:dateTime, $slot as xs:dayTimeDuration,$count as xs:int) {
+    if(($end - $start) gt $slot)
+    then (element IntervaDetails{
+           element Interval{attribute attr {$count},
+             element startDateTime{xs:time($start)},
+             element endDateTime{xs:time($start +( $slot - xs:dayTimeDuration("PT1S")))}
+           }
+         })
+    else
+        element IntervaDetails{
+           element Interval{attribute attr {$count},
+             element startDateTime{xs:time($start)},
+             element endDateTime{xs:time($end)}
+           }
+         },
+     if(($end - $start) gt $slot)
+     then let $start := $start + $slot
+     return local:Timeslot($start,$end,$slot,($count+1))
+     else()
+     
+};
+
+let $start := xs:time("09:00:00")
+let $end := xs:time("15:25:45")
+let $slot := xs:dayTimeDuration("PT30M")
+let $count := xs:int(1)
+let $sol := local:Timeslot(xs:dateTime($start),xs:dateTime($end),$slot,$count)
+return $sol

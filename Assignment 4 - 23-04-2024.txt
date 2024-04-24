@@ -1,0 +1,61 @@
+1. Document Insert
+
+xquery version "1.0-ml";
+declare function local:randomAuthor($seq as item()*) as item()* {
+  let $index := xdmp:random(1)
+  return subsequence($seq, $index+1, 1)
+   
+};
+declare function local:randomYear($seq as item()*) as item()* {
+  let $index := xdmp:random(2)
+  return subsequence($seq, $index+1, 1)
+   
+};
+
+for $docs in 1 to 100
+return xdmp:document-insert("/UCBOS/Library/"||$docs,
+     <library>
+        {for $books in 1 to 10
+         return 
+           (<book>
+             <title>Book No. {$docs}0{$books}</title>
+             <author>{local:randomAuthor(("Author 1", "Author 2"))}</author>
+             <year>{local:randomYear(("2022", "2023","2024"))}</year>
+           </book>)
+        }
+     </library>
+     ,
+     <options xmlns="xdmp:document-insert">
+       <collections>
+         <collection>Assignment_4</collection>
+       </collections>
+     </options>
+)
+
+
+
+2. Write a FLWOR query to return books grouped by year.
+
+xquery version "1.0-ml";
+declare variable $book := doc();
+
+for $years in fn:distinct-values($book/library/book/year/text())
+order by $years
+return (element BooksByYear{ element Year{$years},
+  for $books in $book/library/book[year eq $years]
+  order by xs:int(fn:tokenize($books/title, ' ')[3])
+  return($books)
+})
+
+3. Write a FLWOR query to return books grouped by year and author.
+
+xquery version "1.0-ml";
+declare variable $book := doc();
+
+for $years in fn:distinct-values($book/library/book/year),$authors in fn:distinct-values($book/library/book/author)
+order by $years
+return (element AuthorAndYears{ element object{($authors, $years)},
+  for $books in $book/library/book[year eq $years and author eq $authors]
+  order by xs:int(fn:tokenize($books/title, ' ')[3])
+  return($books)
+})
