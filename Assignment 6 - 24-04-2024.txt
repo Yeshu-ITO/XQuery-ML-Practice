@@ -3,12 +3,11 @@ xquery version "1.0-ml";
 (: Cross-Linkage between ASNID of the collection "ASNID" and ASNID of the collection "ASNDetials" :)
 
 for $docs in cts:uris((),(),cts:collection-query("ASNID"))
-let $asn := xs:string(cts:search(//ASNID,cts:document-query($docs)))
 return element result{
-               element ASNID{$asn},
+               element ASNID{cts:search(//ASNID,cts:document-query($docs))/text()},   
                cts:search(doc(),
                cts:and-query((
-               cts:path-range-query("/root/asnDetails/ASNID", "=", $asn),
+               cts:path-range-query("/root/asnDetails/ASNID", "=", cts:search(//ASNID,cts:document-query($docs))),
                cts:collection-query("ASNDetails")
                )))
 }
@@ -29,7 +28,7 @@ return element result{
 
 for $docs in cts:uris((),(),cts:collection-query("ASNID"))
 return element result{
-               element ASNID_Collection{cts:uris((),(),cts:document-query($docs))},
+               element ASNID_Collection{$docs},
                element ASNDetials_Colletction{
                for $uris in cts:uris((),(),
                cts:and-query((
@@ -51,3 +50,42 @@ return element result{
                cts:collection-query("ASNDetails")
                )))
 }
+xquery version "1.0-ml";
+(:"2 elements" Cross-Linkage between "sender & ASN" of the collection "ASNID" and "sender & ASN" of the collection "ASNDetials" :)
+
+for $docs in cts:uris((),(),cts:collection-query("ASNID"))
+return element result{
+               element Sender{cts:search(//ASNID,cts:document-query($docs))/text(), " - ", cts:search(//sender,cts:document-query($docs))/text()},
+               cts:search(doc(),
+               cts:and-query((
+                 cts:and-query((
+                      cts:path-range-query("/root/asnDetails/sender", "=", cts:search(//sender,cts:document-query($docs))),
+                      cts:path-range-query("/root/asnDetails/ASNID", "=", cts:search(//ASNID,cts:document-query($docs)))
+                  )),
+                 cts:collection-query("ASNDetails")
+               )))
+}
+
+(: To Print the URI's for 2 elements corss-linkage :)
+for $docs in cts:uris((),(),cts:collection-query("ASNID"))
+return element result{
+               element Sender{$docs},
+               cts:uris((),(),
+               cts:and-query((
+                 cts:and-query((
+                      cts:path-range-query("/root/asnDetails/sender", "=", cts:search(//sender,cts:document-query($docs))),
+                      cts:path-range-query("/root/asnDetails/ASNID", "=", cts:search(//ASNID,cts:document-query($docs)))
+                  )),
+                 cts:collection-query("ASNDetails")
+               )))
+}
+
+(: Without the use of FLOWR Expression :)
+cts:search(doc(),
+               cts:and-query((
+                 cts:and-query((
+                      cts:path-range-query("/root/asnDetails/sender", "=", cts:search(//sender,cts:document-query("ASN002"))),
+                      cts:path-range-query("/root/asnDetails/ASNID", "=", cts:search(//ASNID,cts:document-query("ASN002")))
+                  )),
+                 cts:collection-query("ASNDetails")
+               )))
