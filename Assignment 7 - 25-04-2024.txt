@@ -1,0 +1,63 @@
+---------------------------------------Assignment 7 - Convert the below json expression to cts---------------------------------------
+
+xquery version "1.0-ml";
+(:
+{"condition":
+      "and","rules":
+            [{"field":"C1","operator":null},
+             {"field":"C2","operator":null},
+             {"condition":
+                 "or","rules":
+                       [{"condition":
+                             "and","rules":
+                                   [{"field":"C3","operator":null},
+                                    {"field":"C6","operator":null}]
+                         },
+                         {"condition":
+                               "and","rules":
+                                   [{"field":"C4","operator":null},
+                                   {"field":"C5","operator":null}]
+                         }
+                        ]
+               }
+              ]
+}            
+:)
+
+
+---------------------------------------(: Syntax :)---------------------------------------
+
+cts:and-query((
+    cts:path-range-query($path-expression, $operator, $value),
+    cts:path-range-query($path-expression, $operator, $value),
+    cts:or-query((
+        cts:and-query((
+            cts:path-range-query($path-expression, $operator, $value),
+            cts:path-range-query($path-expression, $operator, $value)
+        )),
+        cts:and-query((
+            cts:path-range-query($path-expression, $operator, $value),
+            cts:path-range-query($path-expression, $operator, $value)
+        ))
+    ))
+))
+
+---------------------------------------(: Implementation on the Data :)---------------------------------------
+
+xquery version "1.0-ml";
+cts:search(doc(),
+  cts:and-query((
+    cts:path-range-query("/root/asnDetails/sender", (),()),
+    cts:path-range-query("/root/asnDetails/receiver", (),()),
+    cts:or-query((
+        cts:and-query((
+            cts:path-range-query("/root/asnDetails/ASNID", (), ()),
+            cts:path-range-query("/root/asnDetails/receiver", (), ())
+        )),
+        cts:and-query((
+            cts:path-range-query("/root/asnDetails/ASNID", (), ()),
+            cts:path-range-query("/root/asnDetails/sender", (), ())
+        ))
+    )),
+    cts:collection-query("ASNDetails")
+)))
