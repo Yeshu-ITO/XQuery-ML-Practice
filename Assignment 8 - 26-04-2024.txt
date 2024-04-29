@@ -1,0 +1,24 @@
+----------------------------------------------Copy Path Range Index from one DB to another DB----------------------------------------------
+
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin"at "/MarkLogic/admin.xqy";
+
+let $paths :=admin:database-get-range-path-indexes(admin:get-configuration()/string(), xdmp:database("Assignment_6"))
+let $newDB := admin:database-add-range-path-index(admin:get-configuration(), xdmp:database("Revision"), $paths)
+return admin:save-configuration($newDB)
+
+----------------------------------------------Delete a Database----------------------------------------------
+
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin"at "/MarkLogic/admin.xqy";
+declare variable $config := admin:get-configuration();
+declare variable $dbid := xdmp:database("Assignment_8");
+declare variable $appserverid := admin:appserver-get-id($config,(),());
+declare variable $forests := admin:database-get-attached-forests($config,$dbid);
+admin:save-configuration(admin:appserver-delete($config,$appserverid),admin:database-detach-forest($config, $dbid, $forests)),
+admin:save-configuration(admin:forest-delete($config,$forests,fn:true())),
+admin:save-configuration(admin:database-delete($config, $dbid))
+
+
+(: Delets the database without deleting the forests :)
+admin:save-configuration(admin:database-delete(admin:get-configuration(), xdmp:database("Assignment_8")))

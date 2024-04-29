@@ -1,0 +1,75 @@
+---------------------------------------Assignment 7 - Convert the below json expression to cts---------------------------------------
+
+xquery version "1.0-ml";
+(:
+{"condition":
+      "and","rules":
+            [{"field":"C1","operator":null},
+             {"field":"C2","operator":null},
+             {"condition":
+                 "or","rules":
+                       [{"condition":
+                             "and","rules":
+                                   [{"field":"C3","operator":null},
+                                    {"field":"C6","operator":null}]
+                         },
+                         {"condition":
+                               "and","rules":
+                                   [{"field":"C4","operator":null},
+                                   {"field":"C5","operator":null}]
+                         }
+                        ]
+               }
+              ]
+}            
+:)
+
+
+------------------------Solution------------------------------------------
+
+xquery version "1.0-ml";
+import module namespace json="http://marklogic.com/xdmp/json" at "/MarkLogic/json/json.xqy";
+
+
+declare function local:jsonToCtsQuery($json as json:object){
+if(map:count($json) eq 0)
+then ()
+else
+  let $query := ( 
+      if(map:keys($json)[1] eq "condition")
+      then concat("cts:",xs:string(map:get($json,map:keys($json)[1])),("-query(("))
+      else if(map:keys($json)[1] eq "field") 
+           then  concat("cts:path-range-query(",xs:string(map:get($json,(map:keys($json)[1]))),",",xs:string(map:get($json,(map:keys($json)[2]))),",())")
+           else(),
+      if(map:keys($json)[2] eq "rules")
+      then  for $i at $a in json:array-values(map:get($json,map:keys($json)[2]))
+            return if($a lt count(json:array-values(map:get($json,map:keys($json)[2]))))
+                   then (local:jsonToCtsQuery($i),",")
+                   else (local:jsonToCtsQuery($i),"))")
+            else ()
+       )
+   return string-join($query," ")
+};
+
+let $i := doc("Json1/")
+return local:jsonToCtsQuery($i)
+
+
+
+--------------------------------Output---------------------------------------------
+
+
+cts:and-query(( 
+	cts:path-range-query(C1,,()) , 
+	cts:path-range-query(C2,,()) , 
+	cts:or-query(( 
+		cts:and-query(( 
+			cts:path-range-query(C3,,()) , 
+			cts:path-range-query(C6,,()) 
+		)) , 
+		cts:and-query(( 
+		cts:path-range-query(C4,,()) , 
+		cts:path-range-query(C5,,()) 
+		)) 
+	)) 
+))
