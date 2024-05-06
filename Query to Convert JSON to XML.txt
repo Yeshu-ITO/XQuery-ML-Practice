@@ -1,0 +1,95 @@
+xquery version "1.0-ml";
+import module namespace json="http://marklogic.com/xdmp/json" at "/MarkLogic/json/json.xqy";
+declare variable $json := '{
+    "labelResponseOptions": "URL_ONLY",
+    "requestedShipment": {
+        "shipper": {
+            "contact": {
+                "personName": "SHIPPER NAME",
+                "phoneNumber": 1234567890,
+                "companyName": "Shipper Company Name"
+            },
+            "address": {
+                "streetLines": [
+                    "SHIPPER STREET LINE 1"
+                ],
+                "city": "HARRISON",
+                "stateOrProvinceCode": "AR",
+                "postalCode": 72601,
+                "countryCode": "US"
+            }
+        },
+        "recipients": [
+            {
+                "contact": {
+                    "personName": "RECIPIENT NAME",
+                    "phoneNumber": 1234567890,
+                    "companyName": "Recipient Company Name"
+                },
+                "address": {
+                    "streetLines": [
+                        "RECIPIENT STREET LINE 1",
+                        "RECIPIENT STREET LINE 2"
+                    ],
+                    "city": "Collierville",
+                    "stateOrProvinceCode": "TN",
+                    "postalCode": 38017,
+                    "countryCode": "US"
+                }
+            }
+        ],
+        "shipDatestamp": "2023-05-17",
+        "serviceType": "FEDEX_EXPRESS_SAVER",
+        "packagingType": "FEDEX_SMALL_BOX",
+        "pickupType": "USE_SCHEDULED_PICKUP",
+        "blockInsightVisibility": false,
+        "shippingChargesPayment": {
+            "paymentType": "SENDER"
+        },
+        "shipmentSpecialServices": {
+            "specialServiceTypes": [
+                "FEDEX_ONE_RATE"
+            ]
+        },
+        "labelSpecification": {
+            "imageType": "PDF",
+            "labelStockType": "PAPER_85X11_TOP_HALF_LABEL"
+        },
+        "requestedPackageLineItems": [
+            {
+                "declaredValue": {
+                    "amount": 200,
+                    "currency": "USD"
+                }
+            }
+        ]
+    },
+    "accountNumber": {
+        "value": "740561073"
+    }
+}';
+
+declare function local:jsonToXml($json as json:object){
+if(map:count($json) eq 0)
+then()
+else
+  let $xml := 
+      for $keys in map:keys($json)
+      return ("<",$keys,">"
+      ,if (xs:string(xdmp:type(map:get($json,$keys))) eq "object")
+      then local:jsonToXml(map:get($json,$keys))
+      else if(xs:string(xdmp:type(map:get($json,$keys))) eq "array")
+           then for $arrayValues in json:array-values(map:get($json,$keys))
+                return if(xs:string(xdmp:type($arrayValues)) eq "object" or xs:string(xdmp:type($arrayValues)) eq "array")
+                then local:jsonToXml($arrayValues)
+                else ("<",$keys,">",xs:string($arrayValues),"</",$keys,">")
+           else xs:string(map:get($json,$keys))
+           
+      ,"</",$keys,">")
+
+  return string-join($xml)
+
+};
+
+let $xml := local:jsonToXml(xdmp:unquote($json,(),"format-json"))
+return string-join(("<root>",$xml,"</root>"))
