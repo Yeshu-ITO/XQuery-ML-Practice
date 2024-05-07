@@ -1,0 +1,83 @@
+xquery version "1.0-ml";
+import module namespace json="http://marklogic.com/xdmp/json" at "/MarkLogic/json/json.xqy";
+
+declare variable $JSON := '{
+"OrganizationName": "Alwazzan FSIG Snack", 
+"SourceCode": "7000", 
+"SourceHeaderId": 1234, 
+"TransactionTypeId": "42", 
+"SourceLineId": "7000", 
+"TransactionUnitOfMeasure": "UNITS", 
+"SubinventoryCode":["10",10], 
+"UseCurrentCostFlag": "true", 
+"ItemNumber": "RM2001", 
+"TransactionQuantity": "101", 
+"TransactionMode": "3", 
+"TransactionHeaderId": "7000", 
+"TransactionDate": "2024-04-01", 
+"lots":[ 
+{
+"TransactionQuantity": "101", 
+"LotExpirationDate": "2026-04-01", 
+"LotNumber": "SDS2043"
+}
+]
+}';
+
+
+declare variable $JSON1:='{
+	"OrganizationName": "Alwazzan FSIG Snack",
+	"SourceCode": "7000",
+	"SourceHeaderId":7000,
+	"TransactionTypeId": "42",
+	"SourceLineId": "7000",
+	"TransactionUnitOfMeasure": "UNITS",
+	"SubinventoryCode": [10,10],
+	"lots":[ 
+		{
+			"TransactionQuantity": 123,
+			"LotExpirationDate": "2024-03-31",
+			"LotNumber": "20240101"
+		}
+	],
+	"UseCurrentCostFlag": "true",
+	"ItemNumber": "RM1001",
+	"TransactionQuantity": "null",
+	"TransactionMode": "3",
+	"TransactionHeaderId": "7000",
+	"TransactionDate": "2024-04-01"
+}';
+
+declare function local:changeType($value as xs:string, $dataType as xs:string){
+
+if($dataType eq "string" or $dataType eq "untypedAtomic")  
+ then xs:string($value)
+ else if($dataType eq "integer")
+      then xs:integer($value)
+      else if($dataType eq "boolean")
+          then xs:boolean($value)
+          else ()
+};
+
+declare function local:dataTypeConversion($JSON as json:object,$JSON1 as json:object){
+
+for $keys in map:keys($JSON1)
+return if(not(xs:string(xdmp:type(map:get($JSON1,$keys))) eq "object" or xs:string(xdmp:type(map:get($JSON1,$keys))) eq "array"))
+       then if(xdmp:type(map:get($JSON1,$keys)) eq xdmp:type(map:get($JSON,$keys)))
+            then ()
+              else let $value := map:get($JSON,$keys)
+              let $dataType := xs:string(xdmp:type(map:get($JSON1,$keys)))
+              return map:put($JSON,$keys,local:changeType(xs:string($value),$dataType))
+       else if(xdmp:type(map:get($JSON1,$keys)) eq xs:QName("json:object"))
+            then local:dataTypeConversion(map:get($JSON,$keys),map:get($JSON1,$keys))
+            else let $value := for $values at $i in json:array-values(map:get($JSON1,$keys))
+                               return if(xs:string(xdmp:type($values)) eq "object")
+                               then local:dataTypeConversion(json:array-values(map:get($JSON,$keys))[$i],$values)
+                               else local:changeType(xs:string($values),xs:string(xdmp:type($values)))
+                return let $array := json:array()
+                       let $_ := json:array-push($array, $value)
+                       return map:put($JSON,$keys,$array)
+                        ,$JSON 
+};
+
+local:dataTypeConversion(xdmp:unquote($JSON,(),"format-json"),xdmp:unquote($JSON1,(),"format-json"))
