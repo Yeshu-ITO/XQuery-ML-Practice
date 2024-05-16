@@ -1,0 +1,171 @@
+Loading Appointment attached to 'A' Vessel - Group by Vessel Line Up
+
+
+let $Appointments := collection("Appointment")[xs:date(//ScheduledStartDatetime) eq fn:current-date() ]
+let $Vessels := collection("VesselLineUpInventory")[//VessesId eq 'A']
+for $LineUps in $Vessels[//LineUpId]
+where $Vessels[//ScheduledStartDatetime eq $Appointments//ScheduledStartDatetime and //ScheduledStopDatetime eq $Appointments//ScheduledStopDatetime and //LineUpId eq $LineUps]
+return element  LineUpId{attribute id{$LineUps}, element VesselId {$Vessels//VesselId}, 
+                                                 element AppointmentID{$Vessels//LoadingAppointmentId}, 
+                                                 element ScheduledStartDatetime{$Appointments//ScheduledStartDatetime},
+                                                 element ScheduledStopDatetime{$Appointments//ScheduledStopDatetime}
+                        }
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Appointment attached to  Vessel / Vessel Line up but late for appointment  
+
+let $appointments := collection("Appointment")[//ActualCheckInDateTime gt //ScheduledStartDatetime]
+for $appointment in $appointments
+let $vessels := collection("VesselLineupInventory")[//AppointmentID eq $appointment//AppointmentID]
+return element object{
+                       element AppointmentId{$appointment//AppointmentID/text()},
+                       element vesselId{$vessels//VesselId/text()},
+                       element LineUpId{$vessels//LineUpId/text()},
+                       element InventoryAppointmentType{$vessels//InventoryAppointmentType/text()}
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Total Appointments rescheduled more than once 
+
+
+let $appointments := collection("Appointment")
+for $appointment in $appointments[//AppointmentStatus eq "Cancelled"]
+let $shipmentInventory := collection("ShipmentsandInventory")[//InventoryId eq $appointment//InventoryId]
+let $count := count($appointment//AppointmentStatus)
+return element object{
+               element inventoryId{$shipmentInventory//InventoryId},
+               element AppointmentId{$appointment//AppointmentId},
+               element count{$count}
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Appointment not loaded before Xhrs of vessel departure time:
+
+
+let $appointments := collection("Appointment")[//AppointmentStatus eq "Confirmed" and //AppointmentType eq "Load"]
+for $appointment in $appointments
+let $vessels := collection(VesselJourney)[//InventoryId eq $appointment//InventoryId]
+let $gap := $appointment//ScheduleStartDateTime - $vessels//ScheduleStartDateTime
+return (let $delay :=  if($gap ge xs:duration("PT4H"))
+                      then "4 hours"
+                      else if ( $gap ge xs:duration("PT3H") and $gap lt xs:duration("PT4H"))
+                      then "3 Hours"
+                      else if ( $gap ge xs:duration("PT2H") and $gap lt xs:duration("PT3H"))
+                      then "2 Hours"
+                      else if ( $gap ge xs:duration("PT1H") and $gap lt xs:duration("PT2H"))
+                      then "1 Hours"
+                      else()
+              order by $delay
+              return element delay{attribute hours {$delay},
+              element AppointmentId{$appointment//AppointmentId/text()},
+              element InvetoryId{$vessels//InvetoryId/text()},
+              element StartAndEndTime{$appointment//ScheduleStartandEndDate/text()},
+              element VesselId{$vessels//VesselId/text()},
+              element VesselName{$vessels//VesselName/text()},
+              element ExpectedVesselOriginDepartureDateTime{$vessels//ExpectedVesselOriginDepartureDateTime/text()}
+              } 
+              
+              )
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+16-05-2024
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+Total Barges/Trucks/Rail Arrrived but not checked in more than Xhrs
+
+
+let $appointments := collection("Appointment")[//AppointmentStatus eq "Confirmed"]
+let $shipments := collection("ShipmentsandInventory")[//ShipmentStatus eq "Arrived" and fn:hours-from-time(xs:time(//ActualShipmentDestinationArrivalDateTime - fn:current-dateTime())) gt 1]
+for $appointment in $appointments
+for $shipment in $shipments[.//AppointmentId eq $appointment//AppointmentId]
+order by $shipments//InventoryType
+return element object{
+              element InventoryCount{count($shipment//InventoryId)},
+              element InventoryType{$shipments//InventoryType/text()},
+              element ActualShipmentDestinationArrivalDateTime{$shipment//ActualShipmentDestinationArrivalDateTime/text()},
+              element DelayHours{fn:hours-from-time(xs:time($shipment//ActualShipmentDestinationArrivalDateTime - fn:current-dateTime()))}
+}
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Total Appointments to be loaded for a given vessel line up 
+
+for $VesselLineUp in collection("VesselLineupBlend")
+let $appointments := collection("Appointment")[.//AppointmentStatus eq "Confirmed" and   .//AppointmentType eq "Load" and .//LineUpId eq $VesselLineUp//LineUpId]
+let $total := count($appointments)
+return element object{
+          element VesselLineUpId{$VesselLineUp//LineUpId},
+          element Count{$total}
+}
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Total available appointment slots for loading    - X day(user to select)
+
+let $date := xs:date("2024-05-16")
+let $appointment := collection("Appointment")[.//AppointmentType eq "Load"]
+return element object{
+               element SumofAppointments{$appointment[xs:date(.//ScheduledStartDateTime) eq $date]//SumofAppointments/text()},
+               element AppointmentId{$appointment[xs:date(.//ScheduledStartDateTime) eq $date]//AppointmentId/text()}
+}
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Shipments that are impacted by weather disruptions 
+
+let $shipments := collection("ShipmentsandInventory")
+for $ids in $shipments//InventoryId/text()
+let $route := collection("StaticRouteLocation")[.//InventoryId eq $ids]//RouteID/text()
+let $weatherStatus := collection("WeatherDisruption")[.//RouteId eq $route]
+return if($weatherStatus//WeatherDisruptionStatus ne "Normal")    
+       then element object{
+                   element ShipmentId{$shipments[.//InventoryId eq $ids]//ShipmentId/text()}
+       }
+       else()
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Total Barges/Trucks/Rail partially unloaded with idle time(waiting time since the arrival)
+
+let $shipments := collection("ShipmentsandInventory")[.//ShipmentStatus eq "PartiallyUnloaded" and (.//CheckedInDateTime - fn:current-dateTime()) gt xs:dayTimeDuration("P1D")]
+let $count := count($shipments)
+return element object{
+               element count{$count},
+               for $shipment in $shipments
+               return (element InventoryType{$shipment//InventoryTyep/text()},
+                      element ActualShipmentDestinationArrivalDateTime{$shipment//ActualShipmentDestinationArrivalDateTime/text()},
+                      element ShipmentStatus{$shipment//ShipmentStatus/text()},
+                      element IdleDays{fn:days-from-duration($shipment//.//CheckedInDateTime - fn:current-dateTime())})
+}
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Total available appointment slots for unloading    - X day (user to select)
+
+let $date := xs:date("2024-05-16")
+let $appointment := collection("Appointment")[.//AppointmentType eq "Unload"]
+return element object{
+               element SumofAppointments{$appointment[xs:date(.//ScheduledStartDateTime) eq $date]//SumofAppointments/text()},
+               element AppointmentId{$appointment[xs:date(.//ScheduledStartDateTime) eq $date]//AppointmentId/text()}
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Total Appointments for X date
+
+let $date := xs:date("2024-05-16")
+let $appointments := collection("Appointment")[.//ScheduleStartDate eq $date]
+let $Equipments := fn:distinct-values($appointments//EquipmentType)
+return element object{
+               for $Equipment in $Equipments
+               return  (element EquipmentType{$Equipment},
+                       element count{count($appointments[.//EquipmentType eq $Equipment])})
+}	
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Total shipments Unloading in real time 
+
+let $appointments := collection("Appointment")[.//AppointmentType eq "Unload" and xs:dateTime(.//ScheduledStartDateTime) lt fn:current-dateTime() and (xs:dateTime(.//ScheduledStartDateTime) + xs:dayTimeDuration("PT30M")) gt fn:current-dateTime()]
+return element object{
+               element count{count($appointments)}
+}
+
