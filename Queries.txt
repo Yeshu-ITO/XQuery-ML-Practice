@@ -169,3 +169,122 @@ return element object{
                element count{count($appointments)}
 }
 
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+17-05-2024
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+Total Appointments for X date group by Vessels
+
+let $date := xs:date("2024-05-17")
+let $appointments := collection("Appointment")
+let $vessels := fn:distinct-values($appointments//VesselId)
+return element object{
+          for $vessel in $vessels
+          return (element vessel{$vessel},
+                 element TotalAppointments{count($appointments[xs:date(.//ScheduleStartDate) eq $date] and .//VesselId eq $vessel)})
+}  
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+commodity - grade - inventory position - status - availability  date  (Current)
+
+
+let $date := fn:current-date()
+let $shipments := collection("ShipmentandInventroy")[xs:date(.//ActualShipmentDestinationArrivalDateTime) eq $date]
+let $staus := fn:distinct-values($shipments//Status)
+return (element object{
+               for $stat in $staus
+               return (element Status{$stat},
+                      element Commodity{$shipments[.//Status eq $stat]//Commodity/text()},
+                      element grade{$shipments[.//Status eq $stat]//Grade/text()},
+                      element inventoryposition{$shipments[.//Status eq $stat]//inventoryposition/text()})
+               
+})
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+commodity - grade - inventory position - status - availability date - (future date) 
+
+
+let $date := fn:current-date()
+let $shipments := collection("ShipmentandInventroy")[xs:date(.//EstimatedShipmentDestinationArrivalDateTime  ) eq $date]
+let $staus := fn:distinct-values($shipments//Status)
+return (element object{
+               for $stat in $staus
+               return (element Status{$stat},
+                      element Commodity{$shipments[.//Status eq $stat]//Commodity/text()},
+                      element grade{$shipments[.//Status eq $stat]//Grade/text()},
+                      element inventoryposition{$shipments[.//Status eq $stat]//inventoryposition/text()})
+               
+})
+-----------------------------------------------------------------------------------------------------------------------------------------
+shipments not matching IB/OB grading 
+
+
+let $invetories := collection("ShipmentsandInventory")
+for $ids in $invetories//InventoryId
+return return element object{
+       for $vessels in collection("VesselLineupInventory")[.//LoadGrade ne .//UnloadGrade and .//InventoryId eq $ids]
+       element ShipmentId{$invetories[.//InventoryId eq $ids]//InventoryId/text()}  
+       }
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+21-05-2024
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Potential contract voilation if "Y" appointments are not loaded in Xhrs 
+
+let $date := fn:current-dateTime()
+let $appointments := collection("Appointment")[.//AppointmentStatus eq "Confirmed" and .//AppointmentType eq "Load"]
+for $appointment in $appointments
+let $vessel := collection("VesselLineUpBlend")//VesselId[. eq $appointment//VesselId]/text()
+let $journey := collection("VesselJourney")//VesselId[. eq $vessel]
+return if($journey//ActualDepatureDate > xs:date($journey//ExpectedVesselOriginDepartureDateTime + xs:duration("PT5H")))
+       then element object{
+                    element VesselId{$vessel},
+                    element Voilation{fn:true()}
+       }
+       else
+       element object{
+                    element VesselId{$vessel},
+                    element Voilation{fn:false()}
+       }
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Overall view of Inventories assigned to a Vessel and Vessel Journey
+
+for $appointment in collection("Appointment")
+let $vesselInventory := collection("VesselLineupInventory")[.//VesselId eq $appointment//VesselId and .//InventoryId eq $appointment//InventoryId]
+let $shipment := collection("ShipmentsandInventory")[.//InventoryId eq $vesselInventory//InventoryId and .//InventoryId eq $appointment//InventoryId]
+return element object{
+            element VesselId{$appointment//VesselId/text()},
+            element JourneyId{$vesselInventory//JourneyId/text()},
+            element InventoryId{$vesselInventory//InventoryId/text()},
+            element InventoryType{$vesselInventory//InventoryType/texty()},
+            element ShipmentStatus{$shipment//ShipmentStatus/text()},
+            element UnloadAppointmentStatus{$appointment//UnloadAppointmentStatus/text()},
+            element LoadAppointmentStatus{$appointment//LoadAppointmentStatus/text()}
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+shipments not meeting contract specs based on latest OB grade results
+
+let $shipments := collection("ShipmentandInventory")
+for $shipment in $shipments
+let $vessels := collection("VesselLineupInventory")[.//InventoryId eq $shipment//InventoryId]
+let $contract := collection("AgriContractDetail")[.//InventoryId eq $shipment//InventoryId]
+let $contractGrade := $contract//LoadingGrade/text()
+let $commodity := $contract//commodity/text()
+let $contractId := $contract//contractId/text()
+return element object{
+       if(not($contractGrade eq $vessels//contractGrade))
+       then( element InventoryId{$shipment//InventoryId/text()},
+            element ContractId{$contractId},
+            element commodity{$commodity},
+            element LoadingGrade{$contractGrade})
+       else()
+       }
