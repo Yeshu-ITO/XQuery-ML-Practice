@@ -1,0 +1,147 @@
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+declare variable $db := xdmp:database("IndexAssignment");
+declare variable $config := admin:get-configuration();
+declare variable $existing := fn:string-join(admin:database-get-range-element-indexes(admin:get-configuration(),xdmp:database("IndexAssignment"))//text()," ");
+
+declare function local:elementRangeIndexes($json as json:object){
+for $values in json:array-values(map:get($json,"range-element-index"))
+return if(not(contains($existing,map:get($values,"localname")))) then
+       admin:database-range-element-index(  map:get($values,"scalar-type"),
+                                            map:get($values,"namespace-uri"),
+                                            map:get($values,"localname"),
+                                            map:get($values,"collation"),
+                                            if(xs:string(map:get($values,"range-value-positions")) eq "true") then fn:true() else fn:false(),                                                
+                                            map:get($values,"invalid-values")  
+                                          )
+      else ()
+};
+for $indexes in local:elementRangeIndexes(doc("elementRangeIndex"))
+return admin:save-configuration(admin:database-add-range-element-index($config, $db, $indexes))
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+declare variable $data := xdmp:unquote(xdmp:filesystem-file("C:\Users\Yeshwanth Kumar\Downloads\elementRangeIndex.json"),(),"format-json");
+declare variable $db := xdmp:database("IndexAssignment");
+declare variable $config := admin:get-configuration();
+declare variable $existing := fn:string-join(admin:database-get-range-element-indexes(admin:get-configuration(),xdmp:database("IndexAssignment"))//text()," ");
+
+declare function local:elementRangeIndexes($json as json:object){
+for $values in json:array-values(map:get($json,"range-element-index"))
+return if(not(contains($existing,map:get($values,"localname")))) then
+       admin:database-range-element-index(  map:get($values,"scalar-type"),
+                                            map:get($values,"namespace-uri"),
+                                            map:get($values,"localname"),
+                                            map:get($values,"collation"),
+                                            if(xs:string(map:get($values,"range-value-positions")) eq "true") then fn:true() else fn:false(),                                                
+                                            map:get($values,"invalid-values")  
+                                          )
+      else ()
+};
+for $indexes in local:elementRangeIndexes($data)
+return admin:save-configuration(admin:database-add-range-element-index($config, $db, $indexes))
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+declare variable $data := '{
+"range-element-index": [
+{
+"scalar-type": "dateTime", 
+"namespace-uri": "http://marklogic.com/xdmp/dls", 
+"localname": "created", 
+"collation": "", 
+"range-value-positions": false, 
+"invalid-values": "reject"
+}, 
+{
+"scalar-type": "dateTime", 
+"namespace-uri": "http://marklogic.com/xdmp/dls", 
+"localname": "replaced", 
+"collation": "", 
+"range-value-positions": false, 
+"invalid-values": "reject"
+}, 
+{
+"scalar-type": "unsignedLong", 
+"namespace-uri": "http://marklogic.com/xdmp/dls", 
+"localname": "version-id", 
+"collation": "", 
+"range-value-positions": false, 
+"invalid-values": "reject"
+}
+]
+}';
+declare variable $db := xdmp:database("IndexAssignment");
+declare variable $config := admin:get-configuration();
+declare variable $existing := fn:string-join(admin:database-get-range-element-indexes(admin:get-configuration(),xdmp:database("IndexAssignment"))//text()," ");
+
+declare function local:elementRangeIndexes($json as json:object){
+for $values in json:array-values(map:get($json,"range-element-index"))
+return if(not(contains($existing,map:get($values,"localname")))) then
+       admin:database-range-element-index(  map:get($values,"scalar-type"),
+                                            map:get($values,"namespace-uri"),
+                                            map:get($values,"localname"),
+                                            map:get($values,"collation"),
+                                            if(xs:string(map:get($values,"range-value-positions")) eq "true") then fn:true() else fn:false(),                                                
+                                            map:get($values,"invalid-values")  
+                                          )
+      else ()
+};
+for $indexes in local:elementRangeIndexes(xdmp:unquote($data,(),"format-json"))
+return admin:save-configuration(admin:database-add-range-element-index($config, $db, $indexes))
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+declare variable $db := xdmp:database("IndexAssignment");
+declare variable $config := admin:get-configuration();
+declare variable $existing := fn:string-join(admin:database-get-range-path-indexes(admin:get-configuration(),xdmp:database("IndexAssignment"))//text()," ");
+
+declare function local:elementRangeIndexes($json as json:object){
+for $values in json:array-values(map:get($json,"range-path-index"))
+return  if(not(contains($existing,map:get($values,"path-expression")))) then
+        admin:database-range-path-index( $db,
+                                        map:get($values,"scalar-type"),
+                                        map:get($values,"path-expression"),
+                                        map:get($values,"collation"),
+                                        if(xs:string(map:get($values,"range-value-positions")) eq "true") then fn:true() else fn:false(),                                                
+                                        map:get($values,"invalid-values")  
+                                      )
+      else()
+};
+for $Queries in local:elementRangeIndexes(doc("extensionPathRangeIndex"))[1]
+return admin:save-configuration(admin:database-add-range-path-index($config, $db, $Queries)) 
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" at "/MarkLogic/admin.xqy";
+declare variable $data := xdmp:unquote(xdmp:filesystem-file("C:\Users\Yeshwanth Kumar\Downloads\pathRangeIndex (1).json"),(),"format-json");
+declare variable $db := xdmp:database("IndexAssignment");
+declare variable $config := admin:get-configuration();
+declare variable $existing := fn:string-join(admin:database-get-range-path-indexes(admin:get-configuration(),xdmp:database("IndexAssignment"))//text()," ");
+
+declare function local:elementRangeIndexes($json as json:object){
+for $values in json:array-values(map:get($json,"range-path-index"))[1]
+return if(not(contains($existing,map:get($values,"path-expression")))) then
+        admin:database-range-path-index( $db,
+                                        map:get($values,"scalar-type"),
+                                        map:get($values,"path-expression"),
+                                        map:get($values,"collation"),
+                                        if(xs:string(map:get($values,"range-value-positions")) eq "true") then fn:true() else fn:false(),                                                
+                                        map:get($values,"invalid-values")  
+                                      )
+      else()
+};
+for $Queries in local:elementRangeIndexes($data)[1]
+return admin:save-configuration(admin:database-add-range-path-index($config, $db, $Queries)) 
+
+
